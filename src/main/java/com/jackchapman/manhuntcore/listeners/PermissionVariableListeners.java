@@ -51,7 +51,8 @@ public class PermissionVariableListeners implements Listener {
 	public void onFurnaceSmelt(InventoryClickEvent e) {
 		if ((e.getView().getTopInventory().getType() != InventoryType.FURNACE)
 				|| e.getView().getTopInventory().getLocation() == null) return;
-		if(e.getSlotType() == InventoryType.SlotType.CONTAINER && e.getAction() != InventoryAction.MOVE_TO_OTHER_INVENTORY) return;
+		if (e.getSlotType() == InventoryType.SlotType.CONTAINER && e.getAction() != InventoryAction.MOVE_TO_OTHER_INVENTORY)
+			return;
 		// Get the increase rate from permission
 		double rate = Util.getPermissionVariable("core.furnace", (Player) e.getWhoClicked())
 				.max().orElse(0) / 100F;
@@ -63,7 +64,7 @@ public class PermissionVariableListeners implements Listener {
 		// Every tick change the cook time by the increased rate
 		furnaceTasks.put(e.getInventory().getLocation(), Bukkit.getScheduler().runTaskTimer(plugin, () -> {
 			BlockState state = e.getView().getTopInventory().getLocation().getBlock().getState();
-			if(!(state instanceof Furnace)) {
+			if (!(state instanceof Furnace)) {
 				int task = furnaceTasks.get(state.getLocation());
 				furnaceTasks.remove(state.getLocation());
 				Bukkit.getScheduler().cancelTask(task);
@@ -83,7 +84,7 @@ public class PermissionVariableListeners implements Listener {
 			carry.put(furnace.getLocation(), c % 1);
 
 			furnace.setCookTime((short) (furnace.getCookTime() + c));
-			furnace.setBurnTime((short) (furnace.getBurnTime() - ((int)c)));
+			furnace.setBurnTime((short) (furnace.getBurnTime() - ((int) c)));
 			furnace.update();
 
 		}, 1, 1).getTaskId());

@@ -1,17 +1,31 @@
 package com.jackchapman.manhuntcore;
 
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class Game {
-	private final List<UUID> hunters;
+	private final List<UUID> players;
+	private List<UUID> hunters;
 	private UUID hunted;
 	private boolean running;
 	private boolean countdown; // If the hunted player is able to move but the hunters are still frozen
 
-	public Game(UUID hunted, List<UUID> hunters) {
-		this.hunters = hunters;
-		this.hunted = hunted;
+	public Game(List<UUID> players) {
+		this.players = players;
+	}
+
+	/**
+	 * Returns the players waiting for game to start
+	 * List is empty after game has started
+	 *
+	 * @return The players currently in the game
+	 */
+	public List<Player> getPlayers() {
+		return players.stream().map(Bukkit::getPlayer).collect(Collectors.toList());
 	}
 
 	/**
@@ -27,6 +41,14 @@ public class Game {
 		this.countdown = countdown;
 	}
 
+	public List<UUID> getHunters() {
+		return hunters;
+	}
+
+	public void setHunters(List<UUID> hunters) {
+		this.hunters = hunters;
+	}
+
 	public UUID getHunted() {
 		return hunted;
 	}
@@ -35,8 +57,12 @@ public class Game {
 		this.hunted = hunted;
 	}
 
-	public List<UUID> getHunters() {
-		return hunters;
+	public Player getHuntedPlayer() {
+		return Bukkit.getPlayer(hunted);
+	}
+
+	public List<Player> getHuntersAsPlayer() {
+		return hunters.stream().map(Bukkit::getPlayer).collect(Collectors.toList());
 	}
 
 	/**
