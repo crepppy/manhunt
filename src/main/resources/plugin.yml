@@ -1,0 +1,13 @@
+name: ManhuntCore
+version: ${project.version}
+main: com.jackchapman.manhuntcore.ManhuntCore
+api-version: 1.16
+description: The core plugin for the manhunt gamemode
+
+commands:
+  forcestart:
+    description: Forcefully starts the current game
+    usage: /<command>
+  givetracker:
+    description: Gives the player a tracking item
+    usage: /<command>
