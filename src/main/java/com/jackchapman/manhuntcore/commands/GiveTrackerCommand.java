@@ -6,9 +6,18 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.util.StringUtil;
 
-public class GiveTrackerCommand implements CommandExecutor {
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+public class GiveTrackerCommand implements CommandExecutor, TabCompleter {
+	private static final List<String> tabCompletion = Arrays.asList("rod", "compass", "compass+");
+
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 		if (args.length < 2) {
@@ -33,5 +42,17 @@ public class GiveTrackerCommand implements CommandExecutor {
 			}
 		}
 		return true;
+	}
+
+	@Override
+	public List<String> onTabComplete(CommandSender commandSender, Command command, String s, String[] args) {
+		List<String> tab = new ArrayList<>();
+		if (args.length == 0) return Collections.emptyList();
+		if (args.length == 1) return null;
+		if (args.length == 2) {
+			StringUtil.copyPartialMatches(args[1], tabCompletion, tab);
+			Collections.sort(tab);
+			return tab;
+		} else return Collections.emptyList();
 	}
 }

@@ -2,7 +2,10 @@ package com.jackchapman.manhuntcore.listeners;
 
 import com.jackchapman.manhuntcore.ManhuntCore;
 import com.jackchapman.manhuntcore.Util;
-import org.bukkit.*;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -21,13 +24,13 @@ public class TrackerListeners implements Listener {
 
 	@EventHandler
 	public void onInteractEvent(PlayerInteractEvent e) {
-		if(plugin.getGame() == null || !plugin.getGame().isRunning()) return;
+		if (plugin.getGame() == null || !plugin.getGame().isRunning()) return;
 		if ((e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK) && e.getItem() != null && e.getItem().equals(ManhuntCore.TRACKING_ROD)) {
 			e.getPlayer().playSound(e.getPlayer().getLocation(), Sound.ENTITY_ITEM_BREAK, 1, 1);
-			e.getPlayer().getInventory().setItemInMainHand(null);
+			e.getItem().setAmount(0);
 			ChatColor color = Util.colorFromDimension(e.getPlayer().getLocation());
 			Location l = e.getPlayer().getLocation();
-			plugin.getGame().getHuntersAsPlayer().forEach(p -> p.sendMessage(
+			plugin.getGame().getHunterPlayers().forEach(p -> p.sendMessage(
 					ChatColor.translateAlternateColorCodes('&', String.format("&eDimension: %1$s%2$s\n&eX: %1$s%3$s\n&eY: %1$s%4$s\n&eZ: %1$s%5$s", color, Util.dimensionName(l), l.getBlockX(), l.getBlockY(), l.getBlockZ()))
 			));
 		}
