@@ -5,31 +5,16 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.jackchapman</groupId>
-    <artifactId>manhunt-core</artifactId>
+    <artifactId>manhunt</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
-
-    <name>Manhunt Core</name>
-    <description>The core plugin for the manhunt gamemode</description>
+    <packaging>pom</packaging>
 
     <properties>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>spigotmc-repo</id>
-            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
-        </repository>
-    </repositories>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot-api</artifactId>
-            <version>1.16.3-R0.1-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
-    </dependencies>
+    <modules>
+        <module>manhunt-core</module>
+    </modules>
 </project>

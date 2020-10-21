@@ -1,0 +1,6 @@
+{
+    "pack": {
+        "pack_format": 6,
+        "description": "Allows blaze to spawn anywhere in the world"
+    }
+}
