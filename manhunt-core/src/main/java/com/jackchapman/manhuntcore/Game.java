@@ -20,10 +20,16 @@ public class Game {
 	private boolean running;
 	private boolean ended;
 	private PlayerType winners;
+	private final int mode;
 	private boolean countdown; // If the hunted player is able to move but the hunters are still frozen
 
-	public Game(List<UUID> players) {
-		this.waiting = players;
+	public Game(int mode) {
+		this.mode = mode;
+		this.waiting = new ArrayList<>();
+	}
+
+	public int getMode() {
+		return mode;
 	}
 
 	public boolean isEnded() {
@@ -89,7 +95,7 @@ public class Game {
 	}
 
 	public List<Player> getHunterPlayers() {
-		if(hunters.isEmpty()) return Collections.emptyList();
+		if (hunters.isEmpty()) return Collections.emptyList();
 		return hunters.stream().map(Bukkit::getPlayer).collect(Collectors.toList());
 	}
 
@@ -166,10 +172,15 @@ public class Game {
 		ended = true;
 		winners = hunterWin ? PlayerType.HUNTER : PlayerType.HUNTED;
 
-		ByteArrayDataOutput out = ByteStreams.newDataOutput();
-		out.writeUTF("Connect");
-		out.writeUTF("hub");
-		getHuntedPlayer().sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
+		ByteArrayDataOutput endOutput = ByteStreams.newDataOutput();
+		endOutput.writeUTF("end");
+		endOutput.writeBoolean(ended);
+		getHuntedPlayer().sendPluginMessage(plugin, "manhunt:game", endOutput.toByteArray());
+
+		ByteArrayDataOutput sendToHub = ByteStreams.newDataOutput();
+		sendToHub.writeUTF("Connect");
+		sendToHub.writeUTF("hub");
+		getPlayers().forEach(p -> p.sendPluginMessage(plugin, "BungeeCord", sendToHub.toByteArray()));
 	}
 
 	private enum PlayerType {

@@ -2,12 +2,15 @@ package com.jackchapman.manhuntcore.listeners;
 
 import com.jackchapman.manhuntcore.Game;
 import com.jackchapman.manhuntcore.ManhuntCore;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
@@ -16,6 +19,14 @@ public class PregameListeners implements Listener {
 
 	public PregameListeners(ManhuntCore plugin) {
 		this.plugin = plugin;
+	}
+
+	@EventHandler
+	public void onPlayerJoin(AsyncPlayerPreLoginEvent e) {
+		if(plugin.getGame() != null && !plugin.getGame().isRunning() && Bukkit.getOnlinePlayers().size() >= plugin.getGame().getMode()) {
+			e.setKickMessage(ChatColor.RED + "This server is currently full. Please try again in a few seconds");
+			e.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_FULL);
+		}
 	}
 
 	@EventHandler

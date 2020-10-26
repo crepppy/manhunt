@@ -16,5 +16,6 @@
 
     <modules>
         <module>manhunt-core</module>
+        <module>manhunt-lobby</module>
     </modules>
 </project>

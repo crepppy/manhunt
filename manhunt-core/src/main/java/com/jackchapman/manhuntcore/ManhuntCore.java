@@ -2,10 +2,7 @@ package com.jackchapman.manhuntcore;
 
 import com.jackchapman.manhuntcore.commands.ForceStartCommand;
 import com.jackchapman.manhuntcore.commands.GiveTrackerCommand;
-import com.jackchapman.manhuntcore.listeners.EndgameListener;
-import com.jackchapman.manhuntcore.listeners.PermissionVariableListeners;
-import com.jackchapman.manhuntcore.listeners.PregameListeners;
-import com.jackchapman.manhuntcore.listeners.TrackerListeners;
+import com.jackchapman.manhuntcore.listeners.*;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import org.bukkit.Bukkit;
@@ -24,6 +21,13 @@ public class ManhuntCore extends JavaPlugin {
 	public void onEnable() {
 		saveResource("config.yml", false);
 
+		// Register plugin channels for communication between lobby and game plugin
+		getServer().getMessenger().registerIncomingPluginChannel(this, "manhunt:game", new LobbyPluginMessageListener(this));
+		getServer().getMessenger().registerOutgoingPluginChannel(this, "manhunt:game");
+
+		// Register BungeeCord channel to send player between servers
+		getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+
 		// Register listeners
 		Bukkit.getPluginManager().registerEvents(new PregameListeners(this), this);
 		Bukkit.getPluginManager().registerEvents(new PermissionVariableListeners(this), this);
@@ -35,9 +39,6 @@ public class ManhuntCore extends JavaPlugin {
 		getCommand("forcestart").setExecutor(new ForceStartCommand(this));
 		getCommand("givetracker").setExecutor(trackerCommand);
 		getCommand("givetracker").setTabCompleter(trackerCommand);
-
-		// Register BungeeCord channel to send player between servers
-		this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 
 		// Every .5 seconds
 		Bukkit.getScheduler().runTaskTimer(this, () -> {
