@@ -89,8 +89,12 @@ public class Game {
 	}
 
 	public List<Player> getHunterPlayers() {
-		if(hunters.isEmpty()) return Collections.emptyList();
+		if (hunters.isEmpty()) return Collections.emptyList();
 		return hunters.stream().map(Bukkit::getPlayer).collect(Collectors.toList());
+	}
+
+	public List<Player> getWinnerPlayers() {
+		return getWinners().stream().map(Bukkit::getPlayer).collect(Collectors.toList());
 	}
 
 	/**
@@ -153,6 +157,12 @@ public class Game {
 			}
 		};
 
+		// Give the correct compass to the hunters
+		hunters.forEach(hunter -> {
+			if (hunter.hasPermission("core.compass+")) hunter.getInventory().addItem(ManhuntCore.COMPASS_PLUS);
+			else hunter.getInventory().addItem(ManhuntCore.COMPASS);
+		});
+
 		// Register the tasks to start the countdowns
 		// Cancel the tasks after they are done
 		BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, f.apply(Collections.singletonList(hunted), true), 0, 20);
@@ -166,15 +176,24 @@ public class Game {
 		ended = true;
 		winners = hunterWin ? PlayerType.HUNTER : PlayerType.HUNTED;
 
-		ByteArrayDataOutput out = ByteStreams.newDataOutput();
-		out.writeUTF("Connect");
-		out.writeUTF("hub");
-		getHuntedPlayer().sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
+		getWinnerPlayers().forEach(x -> x.sendTitle(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("won-game")), null, 5, 15 * 20, 5));
+		List<Player> losers = getPlayers();
+		losers.removeAll(getWinnerPlayers());
+		losers.forEach(x -> x.sendTitle(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("lost-game")), null, 5, 15 * 20, 5));
+		getPlayers().forEach(player -> player.sendMessage(ChatColor.DARK_RED + "Returning to lobby in 15 seconds"));
+
+		Bukkit.getScheduler().runTaskLater(plugin, () -> {
+			ByteArrayDataOutput out = ByteStreams.newDataOutput();
+			out.writeUTF("Connect");
+			out.writeUTF(plugin.getConfig().getString("lobby-server"));
+			getHuntedPlayer().sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
+			getPlayers().forEach(p -> p.sendPluginMessage(plugin, "BungeeCord", out.toByteArray()));
+			Bukkit.shutdown();
+		}, 15 * 20L);
+
 	}
 
 	private enum PlayerType {
 		HUNTER, HUNTED
 	}
-
-
 }
