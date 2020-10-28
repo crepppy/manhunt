@@ -1,15 +1,15 @@
 package com.jackchapman.manhuntlobby;
 
-import com.sun.tools.javac.util.List;
 import de.simonsator.partyandfriends.api.pafplayers.OnlinePAFPlayer;
 import de.simonsator.partyandfriends.api.party.PartyManager;
-import de.simonsator.partyandfriends.api.party.PlayerParty;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class JoinCommand extends Command {
@@ -32,11 +32,17 @@ public class JoinCommand extends Command {
 			return;
 		}
 		ProxiedPlayer player = (ProxiedPlayer) sender;
-		PlayerParty party = null;
-		if(plugin.getProxy().getPluginManager().getPlugin("PartyAndFriends") == null)
-			party = PartyManager.getInstance().getParty(player.getUniqueId());
-		if(args[0].chars().allMatch(Character::isDigit)) {
-			plugin.addGame(party == null ? List.of(player) : party.getAllPlayers().stream().map(OnlinePAFPlayer::getPlayer).collect(Collectors.toList()), Integer.parseInt(args[0]));
+		List<ProxiedPlayer> party = Collections.singletonList(player);
+		if (plugin.getProxy().getPluginManager().getPlugin("PartyAndFriends") == null)
+			party = PartyManager.getInstance().getParty(player.getUniqueId()).getAllPlayers().stream().map(OnlinePAFPlayer::getPlayer).collect(Collectors.toList());
+		if (args[0].chars().allMatch(Character::isDigit)) {
+			int mode = Integer.parseInt(args[0]);
+			if (mode == 1) {
+				sender.sendMessage(new ComponentBuilder("Gamemode must be at least 2 players").color(ChatColor.RED).create());
+			} else if (party.size() > mode) {
+				sender.sendMessage(new ComponentBuilder("Your party is too big for this mode!").color(ChatColor.RED).create());
+			} else
+				plugin.addGame(party, mode);
 		} else {
 			sender.sendMessage(new ComponentBuilder("Number of players is not a valid number").color(ChatColor.RED).create());
 		}

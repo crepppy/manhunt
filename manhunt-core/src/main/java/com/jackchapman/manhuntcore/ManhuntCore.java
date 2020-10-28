@@ -44,10 +44,10 @@ public class ManhuntCore extends JavaPlugin {
 
 		// Every .5 seconds
 		Bukkit.getScheduler().runTaskTimer(this, () -> {
-			if (game != null) {
+			if (game != null && game.isRunning()) {
 				// Update the compass to the players location
 				Player hunted = game.getHuntedPlayer();
-				if(hunted == null) return;
+				if (hunted == null) return;
 				game.getHunterPlayers().forEach(p -> p.setCompassTarget(hunted.getLocation()));
 
 				// If a player is holding a compass+ then update their action bar to show the current dimension
@@ -104,6 +104,10 @@ public class ManhuntCore extends JavaPlugin {
 
 	public BungeeConfiguration getBungeeConfig() {
 		return bungeeConfig;
+	}
+
+	public void setBungeeConfig(BungeeConfiguration bungeeConfig) {
+		this.bungeeConfig = bungeeConfig;
 	}
 
 }

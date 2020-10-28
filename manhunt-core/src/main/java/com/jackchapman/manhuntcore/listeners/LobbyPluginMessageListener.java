@@ -2,8 +2,13 @@ package com.jackchapman.manhuntcore.listeners;
 
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteStreams;
+import com.jackchapman.manhuntcore.BungeeConfiguration;
 import com.jackchapman.manhuntcore.Game;
 import com.jackchapman.manhuntcore.ManhuntCore;
+import org.bukkit.Bukkit;
+import org.bukkit.Difficulty;
+import org.bukkit.GameRule;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 
@@ -22,11 +27,14 @@ public class LobbyPluginMessageListener implements PluginMessageListener {
 		if (action.equals("start")) {
 			int mode = in.readInt();
 			plugin.setGame(new Game(mode));
-		} if (action.equals("config")) {
-			plugin.getBungeeConfig().setValue("hunted-headstart", in.readInt());
-			plugin.getBungeeConfig().setValue("hunter-chance", in.readInt());
-			plugin.getBungeeConfig().setValue("won-game", in.readUTF());
-			plugin.getBungeeConfig().setValue("lost-game", in.readUTF());
+			World w = Bukkit.getServer().getWorlds().get(0);
+			w.setDifficulty(Difficulty.PEACEFUL);
+			w.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+		}
+		if (action.equals("config")) {
+			plugin.setBungeeConfig(new BungeeConfiguration(
+					in.readInt(), in.readInt(), in.readUTF(), in.readUTF()
+			));
 		}
 	}
 }

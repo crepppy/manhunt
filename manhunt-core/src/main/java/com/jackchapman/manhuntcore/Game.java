@@ -2,9 +2,7 @@ package com.jackchapman.manhuntcore;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
@@ -19,6 +17,14 @@ public class Game {
 	private List<UUID> hunters;
 	private UUID hunted;
 	private BukkitTask preGameTask;
+	private boolean running;
+	private boolean ended;
+	private PlayerType winners;
+	private boolean countdown; // If the hunted player is able to move but the hunters are still frozen
+	public Game(int mode) {
+		this.mode = mode;
+		this.waiting = new ArrayList<>();
+	}
 
 	public BukkitTask getPreGameTask() {
 		return preGameTask;
@@ -26,16 +32,6 @@ public class Game {
 
 	public void setPreGameTask(BukkitTask preGameTask) {
 		this.preGameTask = preGameTask;
-	}
-
-	private boolean running;
-	private boolean ended;
-	private PlayerType winners;
-	private boolean countdown; // If the hunted player is able to move but the hunters are still frozen
-
-	public Game(int mode) {
-		this.mode = mode;
-		this.waiting = new ArrayList<>();
 	}
 
 	public int getMode() {
@@ -127,13 +123,15 @@ public class Game {
 	}
 
 	public void start(ManhuntCore plugin) {
+		Bukkit.getWorlds().get(0).setDifficulty(Difficulty.NORMAL);
+		Bukkit.getWorlds().get(0).setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
 		// Teleport all players back to spawn so they don't get an advantage by
 		// running whilst players are joining
 		World world = getWaitingPlayers().get(0).getWorld();
-		getWaitingPlayers().forEach(p -> p.teleport(world.getSpawnLocation().clone().add(0, 1, 0)));
+		getWaitingPlayers().forEach(p -> p.teleport(world.getSpawnLocation()));
 
 		// Compute which player will be the hunter
-		int defWeight = plugin.getBungeeConfig().getInt("hunter-chance");
+		int defWeight = plugin.getBungeeConfig().getHunterChance();
 		TreeMap<Integer, Player> items = new TreeMap<>();
 		int weight = 0;
 		for (Player player : getWaitingPlayers()) {
@@ -153,7 +151,13 @@ public class Game {
 
 		// Get the default headstart time or the time given by a players permission
 		long time = 20L * Util.getPermissionVariable("core.headstart", hunted).max().orElse(
-				plugin.getBungeeConfig().getInt("hunted-headstart")) + 100L;
+				plugin.getBungeeConfig().getHuntedHeadstart()) + 100L;
+
+		// Send message to proxy to allow players to reconnect
+		ByteArrayDataOutput endOutput = ByteStreams.newDataOutput();
+		endOutput.writeUTF("start");
+		endOutput.writeUTF(getPlayers().stream().map(x -> x.getUniqueId().toString()).collect(Collectors.joining(" ")));
+		getHuntedPlayer().sendPluginMessage(plugin, "manhunt:game", endOutput.toByteArray());
 
 		// Create a BiFunction to reduce code
 		// Shows the countdown of being released to hunted / hunter
@@ -198,12 +202,12 @@ public class Game {
 		List<Player> winningPlayers = getWinnerPlayers();
 		final String winningPlayersStr = winningPlayers.stream().map(Player::getDisplayName).collect(Collectors.joining(", "));
 		final String winningTeam = winners.toString().toLowerCase();
-		final String wonText = ChatColor.translateAlternateColorCodes('&', plugin.getBungeeConfig().getString("won-game")
+		final String wonText = plugin.getBungeeConfig().getWonGame()
 				.replace("%winners", winningPlayersStr)
-				.replace("%winningTeam", winningTeam));
-		final String lostText = ChatColor.translateAlternateColorCodes('&', plugin.getBungeeConfig().getString("lost-game")
+				.replace("%winningTeam", winningTeam);
+		final String lostText = plugin.getBungeeConfig().getLostGame()
 				.replace("%winners", winningPlayersStr)
-				.replace("%winningTeam", winningTeam));
+				.replace("%winningTeam", winningTeam);
 
 		winningPlayers.forEach(x -> x.sendTitle(wonText, null, 5, 15 * 20, 5));
 		List<Player> losers = getPlayers();

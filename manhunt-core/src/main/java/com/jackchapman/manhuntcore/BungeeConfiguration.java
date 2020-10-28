@@ -1,23 +1,40 @@
 package com.jackchapman.manhuntcore;
 
-import java.util.HashMap;
+import org.bukkit.ChatColor;
 
 public class BungeeConfiguration {
-	private final HashMap<String, Object> configMap;
+	private final int huntedHeadstart;
+	private final int hunterChance;
+	private final String wonGame;
+	private final String lostGame;
 
 	public BungeeConfiguration() {
-		this.configMap = new HashMap<>();
+		this.huntedHeadstart = 30;
+		this.hunterChance = 50;
+		this.wonGame = ChatColor.GREEN + "You Won!";
+		this.lostGame = ChatColor.RED + "You Lost!";
 	}
 
-	public void setValue(String key, Object value) {
-		configMap.put(key, value);
+	public BungeeConfiguration(int huntedHeadstart, int hunterChance, String wonGame, String lostGame) {
+		this.huntedHeadstart = huntedHeadstart;
+		this.hunterChance = hunterChance;
+		this.wonGame = ChatColor.translateAlternateColorCodes('&', wonGame);
+		this.lostGame = ChatColor.translateAlternateColorCodes('&', lostGame);
 	}
 
-	public String getString(String key) {
-		return String.valueOf(configMap.get(key));
+	public int getHuntedHeadstart() {
+		return huntedHeadstart;
 	}
 
-	public int getInt(String key) {
-		return (int) configMap.get(key);
+	public int getHunterChance() {
+		return hunterChance;
+	}
+
+	public String getWonGame() {
+		return wonGame;
+	}
+
+	public String getLostGame() {
+		return lostGame;
 	}
 }

@@ -11,6 +11,11 @@ public class Game {
 	private int mode;
 	private List<UUID> players;
 
+	public Game(ServerInfo server, int mode) {
+		this.server = server;
+		this.mode = mode;
+	}
+
 	public List<UUID> getPlayers() {
 		return players;
 	}
@@ -27,16 +32,11 @@ public class Game {
 		return mode;
 	}
 
-	public void setRunning(boolean running) {
-		this.running = running;
-	}
-
 	public boolean isRunning() {
 		return running;
 	}
 
-	public Game(ServerInfo server, int mode) {
-		this.server = server;
-		this.mode = mode;
+	public void setRunning(boolean running) {
+		this.running = running;
 	}
 }
