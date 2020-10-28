@@ -2,8 +2,11 @@ package com.jackchapman.manhuntcore.listeners;
 
 import com.jackchapman.manhuntcore.ManhuntCore;
 import org.bukkit.entity.EnderDragon;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EnderDragonChangePhaseEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 
@@ -27,6 +30,14 @@ public class EndgameListener implements Listener {
 		if (e.getEntity() instanceof EnderDragon) {
 			// Enderdragon killed - hunted player wins
 			plugin.endGame(false);
+		}
+	}
+
+	@EventHandler
+	public void onDamageEvent(EntityDamageEvent e) {
+		// Stop players from taking damage after the game has ended
+		if (e.getEntity() instanceof Player && plugin.getGame() != null && plugin.getGame().isEnded()) {
+			e.setCancelled(true);
 		}
 	}
 }

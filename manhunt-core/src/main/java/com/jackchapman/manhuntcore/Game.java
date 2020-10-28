@@ -15,12 +15,22 @@ import java.util.stream.Collectors;
 
 public class Game {
 	private final List<UUID> waiting;
+	private final int mode;
 	private List<UUID> hunters;
 	private UUID hunted;
+	private BukkitTask preGameTask;
+
+	public BukkitTask getPreGameTask() {
+		return preGameTask;
+	}
+
+	public void setPreGameTask(BukkitTask preGameTask) {
+		this.preGameTask = preGameTask;
+	}
+
 	private boolean running;
 	private boolean ended;
 	private PlayerType winners;
-	private final int mode;
 	private boolean countdown; // If the hunted player is able to move but the hunters are still frozen
 
 	public Game(int mode) {
@@ -99,6 +109,10 @@ public class Game {
 		return hunters.stream().map(Bukkit::getPlayer).collect(Collectors.toList());
 	}
 
+	public List<Player> getWinnerPlayers() {
+		return getWinners().stream().map(Bukkit::getPlayer).collect(Collectors.toList());
+	}
+
 	/**
 	 * Whether the game is running (note if the hunted player hasn't been released yet the game is not running
 	 *
@@ -119,7 +133,7 @@ public class Game {
 		getWaitingPlayers().forEach(p -> p.teleport(world.getSpawnLocation().clone().add(0, 1, 0)));
 
 		// Compute which player will be the hunter
-		int defWeight = plugin.getConfig().getInt("hunter-chance");
+		int defWeight = plugin.getBungeeConfig().getInt("hunter-chance");
 		TreeMap<Integer, Player> items = new TreeMap<>();
 		int weight = 0;
 		for (Player player : getWaitingPlayers()) {
@@ -139,7 +153,7 @@ public class Game {
 
 		// Get the default headstart time or the time given by a players permission
 		long time = 20L * Util.getPermissionVariable("core.headstart", hunted).max().orElse(
-				plugin.getConfig().getInt("hunted-headstart")) + 100L;
+				plugin.getBungeeConfig().getInt("hunted-headstart")) + 100L;
 
 		// Create a BiFunction to reduce code
 		// Shows the countdown of being released to hunted / hunter
@@ -159,6 +173,15 @@ public class Game {
 			}
 		};
 
+		// Give the correct compass to the hunters
+		hunters.forEach(hunter -> {
+			if (hunter.hasPermission("core.compass+")) hunter.getInventory().addItem(ManhuntCore.COMPASS_PLUS);
+			else hunter.getInventory().addItem(ManhuntCore.COMPASS);
+			for (int i = 0; i < Util.getPermissionVariable("core.rod", hunter).max().orElse(0); i++) {
+				hunter.getInventory().addItem(ManhuntCore.TRACKING_ROD);
+			}
+		});
+
 		// Register the tasks to start the countdowns
 		// Cancel the tasks after they are done
 		BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, f.apply(Collections.singletonList(hunted), true), 0, 20);
@@ -172,20 +195,32 @@ public class Game {
 		ended = true;
 		winners = hunterWin ? PlayerType.HUNTER : PlayerType.HUNTED;
 
-		ByteArrayDataOutput endOutput = ByteStreams.newDataOutput();
-		endOutput.writeUTF("end");
-		endOutput.writeBoolean(ended);
-		getHuntedPlayer().sendPluginMessage(plugin, "manhunt:game", endOutput.toByteArray());
+		List<Player> winningPlayers = getWinnerPlayers();
+		final String winningPlayersStr = winningPlayers.stream().map(Player::getDisplayName).collect(Collectors.joining(", "));
+		final String winningTeam = winners.toString().toLowerCase();
+		final String wonText = ChatColor.translateAlternateColorCodes('&', plugin.getBungeeConfig().getString("won-game")
+				.replace("%winners", winningPlayersStr)
+				.replace("%winningTeam", winningTeam));
+		final String lostText = ChatColor.translateAlternateColorCodes('&', plugin.getBungeeConfig().getString("lost-game")
+				.replace("%winners", winningPlayersStr)
+				.replace("%winningTeam", winningTeam));
 
-		ByteArrayDataOutput sendToHub = ByteStreams.newDataOutput();
-		sendToHub.writeUTF("Connect");
-		sendToHub.writeUTF("hub");
-		getPlayers().forEach(p -> p.sendPluginMessage(plugin, "BungeeCord", sendToHub.toByteArray()));
+		winningPlayers.forEach(x -> x.sendTitle(wonText, null, 5, 15 * 20, 5));
+		List<Player> losers = getPlayers();
+		losers.removeAll(winningPlayers);
+		losers.forEach(x -> x.sendTitle(lostText, null, 5, 15 * 20, 5));
+		getPlayers().forEach(player -> player.sendMessage(ChatColor.DARK_RED + "Returning to lobby in 15 seconds"));
+
+		Bukkit.getScheduler().runTaskLater(plugin, () -> {
+			ByteArrayDataOutput endOutput = ByteStreams.newDataOutput();
+			endOutput.writeUTF("end");
+			endOutput.writeBoolean(ended);
+			getHuntedPlayer().sendPluginMessage(plugin, "manhunt:game", endOutput.toByteArray());
+		}, 15 * 20L);
+		Bukkit.getScheduler().runTaskLater(plugin, Bukkit::shutdown, 15 * 20L + 100);
 	}
 
 	private enum PlayerType {
 		HUNTER, HUNTED
 	}
-
-
 }

@@ -1,0 +1,25 @@
+## Prefix for all lobby servers
+## Lobby to send players to once the game has ended
+lobby-server-prefix: lobby
+## Prefix for all game servers
+game-server-prefix: game
+
+
+
+
+## THE FOLLOWING CONFIG IS PASSED TO ALL SERVERS ON THE PROXY
+game:
+  ## Number of seconds head start the hunted player gets
+  hunted-headstart: 30
+
+  ## Default weight for a player to be a hunter
+  ## This number can be ANYTHING but is relative to the other permissions
+  ## Example: a player with a 100 weight will have double chance to be hunter than someone with 50 weight
+  hunter-chance: 50
+
+  ## End titles
+  ## Variables:
+  ##   - %winners      The players that won
+  ##   - %winningTeam  The team that won (hunter or hunted)
+  won-game: '&2Congratulations! You won!'
+  lost-game: '&cYou lost'

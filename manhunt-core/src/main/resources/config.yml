@@ -1,7 +1,0 @@
-## Number of seconds head start the hunted player gets
-hunted-headstart: 30
-
-## Default weight for a player to be a hunter
-## This number can be anything but is relative to the other permissions
-## Example: a player with a 100 weight will have double chance to be hunter than someone with 50 weight
-hunter-chance: 50

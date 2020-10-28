@@ -1,4 +1,4 @@
 name: ManhuntLobby
-version: ${project.version}
+version: 1.0
 main: com.jackchapman.manhuntlobby.ManhuntLobby
 description: A plugin that handles sending players to the correct server and acts as a bridge between the lobby and game servers

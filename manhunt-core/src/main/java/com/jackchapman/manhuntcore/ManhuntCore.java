@@ -16,11 +16,10 @@ public class ManhuntCore extends JavaPlugin {
 	public static final ItemStack COMPASS_PLUS = Util.createItem(Material.COMPASS, "&c&lTracker Compass&r&c+", "&7Points towards and shows the distance from the hunter player");
 	public static final ItemStack TRACKING_ROD = Util.createItem(Material.FISHING_ROD, "&c&lTracking Rod", "&7Shows the current coordinates of the hunted played");
 	private Game game;
+	private BungeeConfiguration bungeeConfig;
 
 	@Override
 	public void onEnable() {
-		saveResource("config.yml", false);
-
 		// Register plugin channels for communication between lobby and game plugin
 		getServer().getMessenger().registerIncomingPluginChannel(this, "manhunt:game", new LobbyPluginMessageListener(this));
 		getServer().getMessenger().registerOutgoingPluginChannel(this, "manhunt:game");
@@ -39,6 +38,9 @@ public class ManhuntCore extends JavaPlugin {
 		getCommand("forcestart").setExecutor(new ForceStartCommand(this));
 		getCommand("givetracker").setExecutor(trackerCommand);
 		getCommand("givetracker").setTabCompleter(trackerCommand);
+
+		// Set empty config, will be set when bungee sends config
+		bungeeConfig = new BungeeConfiguration();
 
 		// Every .5 seconds
 		Bukkit.getScheduler().runTaskTimer(this, () -> {
@@ -98,6 +100,10 @@ public class ManhuntCore extends JavaPlugin {
 	 */
 	public void endGame(boolean hunterWin) {
 		this.game.end(hunterWin, this);
+	}
+
+	public BungeeConfiguration getBungeeConfig() {
+		return bungeeConfig;
 	}
 
 }

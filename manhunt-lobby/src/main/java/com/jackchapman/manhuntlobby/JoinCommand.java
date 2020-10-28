@@ -32,7 +32,9 @@ public class JoinCommand extends Command {
 			return;
 		}
 		ProxiedPlayer player = (ProxiedPlayer) sender;
-		PlayerParty party = PartyManager.getInstance().getParty(player.getUniqueId());
+		PlayerParty party = null;
+		if(plugin.getProxy().getPluginManager().getPlugin("PartyAndFriends") == null)
+			party = PartyManager.getInstance().getParty(player.getUniqueId());
 		if(args[0].chars().allMatch(Character::isDigit)) {
 			plugin.addGame(party == null ? List.of(player) : party.getAllPlayers().stream().map(OnlinePAFPlayer::getPlayer).collect(Collectors.toList()), Integer.parseInt(args[0]));
 		} else {
