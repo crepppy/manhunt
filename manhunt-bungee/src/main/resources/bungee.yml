@@ -1,4 +1,4 @@
-name: ManhuntLobby
+name: ManhuntBungee
 version: 1.0
-main: com.jackchapman.manhuntlobby.ManhuntLobby
+main: com.jackchapman.manhuntbungee.ManhuntBungee
 description: A plugin that handles sending players to the correct server and acts as a bridge between the lobby and game servers

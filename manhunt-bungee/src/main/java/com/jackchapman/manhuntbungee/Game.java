@@ -1,4 +1,4 @@
-package com.jackchapman.manhuntlobby;
+package com.jackchapman.manhuntbungee;
 
 import net.md_5.bungee.api.config.ServerInfo;
 
@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.UUID;
 
 public class Game {
-	private ServerInfo server;
+	private final ServerInfo server;
+	private final int mode;
 	private boolean running;
-	private int mode;
 	private List<UUID> players;
 
 	public Game(ServerInfo server, int mode) {

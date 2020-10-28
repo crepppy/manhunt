@@ -1,4 +1,4 @@
-package com.jackchapman.manhuntlobby;
+package com.jackchapman.manhuntbungee;
 
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
@@ -21,7 +21,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-public class ManhuntLobby extends Plugin implements Listener {
+public class ManhuntBungee extends Plugin implements Listener {
 	public static final String PLUGIN_CHANNEL = "manhunt:game";
 	private Set<Game> running;
 	private Set<ServerInfo> closed;

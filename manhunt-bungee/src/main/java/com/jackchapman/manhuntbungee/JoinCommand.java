@@ -1,4 +1,4 @@
-package com.jackchapman.manhuntlobby;
+package com.jackchapman.manhuntbungee;
 
 import de.simonsator.partyandfriends.api.pafplayers.OnlinePAFPlayer;
 import de.simonsator.partyandfriends.api.party.PartyManager;
@@ -13,9 +13,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class JoinCommand extends Command {
-	private final ManhuntLobby plugin;
+	private final ManhuntBungee plugin;
 
-	public JoinCommand(ManhuntLobby plugin) {
+	public JoinCommand(ManhuntBungee plugin) {
 		super("join");
 		this.plugin = plugin;
 	}

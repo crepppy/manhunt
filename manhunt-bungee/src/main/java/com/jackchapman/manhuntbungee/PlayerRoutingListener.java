@@ -1,4 +1,4 @@
-package com.jackchapman.manhuntlobby;
+package com.jackchapman.manhuntbungee;
 
 import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.md_5.bungee.api.event.ServerDisconnectEvent;
@@ -8,9 +8,9 @@ import net.md_5.bungee.event.EventHandler;
 import java.util.Optional;
 
 public class PlayerRoutingListener implements Listener {
-	private ManhuntLobby plugin;
+	private final ManhuntBungee plugin;
 
-	public PlayerRoutingListener(ManhuntLobby plugin) {
+	public PlayerRoutingListener(ManhuntBungee plugin) {
 		this.plugin = plugin;
 	}
 
