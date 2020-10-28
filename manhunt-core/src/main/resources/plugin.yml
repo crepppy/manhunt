@@ -1,5 +1,5 @@
 name: ManhuntCore
-version: ${project.version}
+version: 1.0
 main: com.jackchapman.manhuntcore.ManhuntCore
 api-version: 1.16
 description: The core plugin for the manhunt gamemode

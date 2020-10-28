@@ -32,7 +32,8 @@ public class ForceStartCommand implements CommandExecutor {
 				}
 				players.add(p.getUniqueId());
 			}
-			plugin.setGame(new Game(players));
+			plugin.setGame(new Game(players.size()));
+			plugin.getGame().getWaiting().addAll(players);
 			plugin.startGame();
 		} else {
 			sender.sendMessage(ChatColor.RED + "Incorrect Format: /forcestart <player1> <player2>...");

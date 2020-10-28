@@ -2,10 +2,7 @@ package com.jackchapman.manhuntcore;
 
 import com.jackchapman.manhuntcore.commands.ForceStartCommand;
 import com.jackchapman.manhuntcore.commands.GiveTrackerCommand;
-import com.jackchapman.manhuntcore.listeners.EndgameListener;
-import com.jackchapman.manhuntcore.listeners.PermissionVariableListeners;
-import com.jackchapman.manhuntcore.listeners.PregameListeners;
-import com.jackchapman.manhuntcore.listeners.TrackerListeners;
+import com.jackchapman.manhuntcore.listeners.*;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import org.bukkit.Bukkit;
@@ -19,10 +16,16 @@ public class ManhuntCore extends JavaPlugin {
 	public static final ItemStack COMPASS_PLUS = Util.createItem(Material.COMPASS, "&c&lTracker Compass&r&c+", "&7Points towards and shows the distance from the hunter player");
 	public static final ItemStack TRACKING_ROD = Util.createItem(Material.FISHING_ROD, "&c&lTracking Rod", "&7Shows the current coordinates of the hunted played");
 	private Game game;
+	private BungeeConfiguration bungeeConfig;
 
 	@Override
 	public void onEnable() {
-		saveResource("config.yml", false);
+		// Register plugin channels for communication between lobby and game plugin
+		getServer().getMessenger().registerIncomingPluginChannel(this, "manhunt:game", new LobbyPluginMessageListener(this));
+		getServer().getMessenger().registerOutgoingPluginChannel(this, "manhunt:game");
+
+		// Register BungeeCord channel to send player between servers
+		getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 
 		// Register listeners
 		Bukkit.getPluginManager().registerEvents(new PregameListeners(this), this);
@@ -36,15 +39,15 @@ public class ManhuntCore extends JavaPlugin {
 		getCommand("givetracker").setExecutor(trackerCommand);
 		getCommand("givetracker").setTabCompleter(trackerCommand);
 
-		// Register BungeeCord channel to send player between servers
-		this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+		// Set empty config, will be set when bungee sends config
+		bungeeConfig = new BungeeConfiguration();
 
 		// Every .5 seconds
 		Bukkit.getScheduler().runTaskTimer(this, () -> {
-			if (game != null) {
+			if (game != null && game.isRunning()) {
 				// Update the compass to the players location
 				Player hunted = game.getHuntedPlayer();
-				if(hunted == null) return;
+				if (hunted == null) return;
 				game.getHunterPlayers().forEach(p -> p.setCompassTarget(hunted.getLocation()));
 
 				// If a player is holding a compass+ then update their action bar to show the current dimension
@@ -97,6 +100,14 @@ public class ManhuntCore extends JavaPlugin {
 	 */
 	public void endGame(boolean hunterWin) {
 		this.game.end(hunterWin, this);
+	}
+
+	public BungeeConfiguration getBungeeConfig() {
+		return bungeeConfig;
+	}
+
+	public void setBungeeConfig(BungeeConfiguration bungeeConfig) {
+		this.bungeeConfig = bungeeConfig;
 	}
 
 }
