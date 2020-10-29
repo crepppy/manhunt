@@ -33,8 +33,17 @@ public class JoinCommand extends Command {
 		}
 		ProxiedPlayer player = (ProxiedPlayer) sender;
 		List<ProxiedPlayer> party = Collections.singletonList(player);
-		if (plugin.getProxy().getPluginManager().getPlugin("PartyAndFriends") == null)
+		if (plugin.getProxy().getPluginManager().getPlugin("PartyAndFriends") == null) {
+			if(!PartyManager.getInstance().getParty(player.getUniqueId()).getLeader().getPlayer().equals(player)) {
+				player.sendMessage(new ComponentBuilder("Only the party leader can join the queue").color(ChatColor.RED).create());
+				return;
+			}
 			party = PartyManager.getInstance().getParty(player.getUniqueId()).getAllPlayers().stream().map(OnlinePAFPlayer::getPlayer).collect(Collectors.toList());
+		}
+		if(plugin.getQueue().contains(party)) {
+			player.sendMessage(new ComponentBuilder("You are already in the queue. Please do /leavequeue to queue again").color(ChatColor.RED).create());
+			return;
+		}
 		if (args[0].chars().allMatch(Character::isDigit)) {
 			int mode = Integer.parseInt(args[0]);
 			if (mode == 1) {

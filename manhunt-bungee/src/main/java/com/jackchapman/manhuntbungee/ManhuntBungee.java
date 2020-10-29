@@ -25,6 +25,8 @@ public class ManhuntBungee extends Plugin implements Listener {
 	public static final String PLUGIN_CHANNEL = "manhunt:game";
 	private Set<Game> running;
 	private Set<ServerInfo> closed;
+	private List<List<ProxiedPlayer>> queue;
+	private HashMap<List<ProxiedPlayer>, Integer> queueMode;
 
 	// Configuration files
 	private Configuration config;
@@ -33,21 +35,31 @@ public class ManhuntBungee extends Plugin implements Listener {
 	public void onEnable() {
 		running = new HashSet<>();
 		closed = new HashSet<>();
+		queue = new ArrayList<>();
+		queueMode = new HashMap<>();
 		loadConfig();
 		getProxy().registerChannel(PLUGIN_CHANNEL);
 		getProxy().getPluginManager().registerCommand(this, new JoinCommand(this));
+		getProxy().getPluginManager().registerCommand(this, new LeaveQueueCommand(this));
 		getProxy().getPluginManager().registerListener(this, this);
 		getProxy().getPluginManager().registerListener(this, new PlayerRoutingListener(this));
 
 		// Remove servers that start offline
-		getProxy().getServers().values().forEach(x -> x.ping((callback, throwable) -> {
-			if (callback != null) closed.add(x);
-		}));
+		getProxy().getServers().values()
+				.stream()
+				.filter(x -> x.getName().startsWith(config.getString("game-server-prefix")))
+				.forEach(x -> x.ping((callback, throwable) -> {
+					if (callback != null) closed.add(x);
+				}));
 
 		// Every 30 seconds, check the status of a previously offline server
 		getProxy().getScheduler().schedule(this, () -> closed.forEach(x -> x.ping((ping, callback) -> {
 			// Server responded, server is back online
-			if (callback == null) closed.remove(x);
+			if (callback == null) {
+				closed.remove(x);
+				// Attempt to move players from the queue into the new mode
+				queue.forEach(party -> sendNewServer(party, queueMode.get(party), x));
+			}
 		})), 30, 30, TimeUnit.SECONDS);
 	}
 
@@ -83,8 +95,8 @@ public class ManhuntBungee extends Plugin implements Listener {
 		return closed;
 	}
 
-	private void sendNewServer(List<ProxiedPlayer> players, int mode) {
-		for (ServerInfo info : getProxy().getServers().values()) {
+	private void sendNewServer(List<ProxiedPlayer> players, int mode, ServerInfo... servers) {
+		for (ServerInfo info : servers.length == 0 ? getProxy().getServers().values() : Arrays.asList(servers)) {
 			// Guard cases for server that cannot run a game
 			if (!info.getName().startsWith(config.getString("game-server-prefix"))) continue;
 			if (closed.contains(info)) continue;
@@ -94,6 +106,8 @@ public class ManhuntBungee extends Plugin implements Listener {
 						closed.add(info);
 						sendNewServer(players, mode);
 					} else {
+						queue.remove(players);
+						queueMode.remove(players);
 						running.add(new Game(info, mode));
 						players.forEach(pl -> pl.connect(info));
 						ByteArrayDataOutput out = ByteStreams.newDataOutput();
@@ -110,7 +124,11 @@ public class ManhuntBungee extends Plugin implements Listener {
 			}
 		}
 		// Couldn't create a server
-		players.forEach(pl -> pl.sendMessage(new ComponentBuilder("Could not find a server at this time!").color(ChatColor.RED).create()));
+		if (!queue.contains(players)) {
+			queue.add(players);
+			queueMode.put(players, mode);
+		}
+		players.forEach(pl -> pl.sendMessage(new ComponentBuilder("You are position " + (queue.indexOf(players) + 1) + " in the queue").color(ChatColor.YELLOW).create()));
 	}
 
 	@EventHandler
@@ -120,6 +138,7 @@ public class ManhuntBungee extends Plugin implements Listener {
 		ByteArrayDataInput in = ByteStreams.newDataInput(e.getData());
 		String msg = in.readUTF();
 		if (msg.equals("end")) {
+			// Server has shutdown -> kick players and reset server
 			Optional<ServerInfo> lobbyServer = getLobbyServer();
 			if (lobbyServer.isPresent())
 				player.getServer().getInfo().getPlayers().forEach(pl -> pl.connect(lobbyServer.get()));
@@ -128,6 +147,7 @@ public class ManhuntBungee extends Plugin implements Listener {
 			running.removeIf(game -> game.getServer().equals(player.getServer().getInfo()));
 			closed.add(player.getServer().getInfo());
 		} else if (msg.equals("start")) {
+			// Set games status to running
 			String players = in.readUTF();
 			for (Game game : running) {
 				if (game.getServer().equals(player.getServer().getInfo())) {
@@ -150,6 +170,14 @@ public class ManhuntBungee extends Plugin implements Listener {
 		return running;
 	}
 
+	public List<List<ProxiedPlayer>> getQueue() {
+		return queue;
+	}
+
+	public HashMap<List<ProxiedPlayer>, Integer> getQueueMode() {
+		return queueMode;
+	}
+
 	private void loadConfig() {
 		if (!getDataFolder().exists()) {
 			getDataFolder().mkdir();
@@ -160,6 +188,7 @@ public class ManhuntBungee extends Plugin implements Listener {
 				configFile.createNewFile();
 				try (InputStream is = getResourceAsStream("config.yml");
 					 OutputStream os = new FileOutputStream(configFile)) {
+					// Copy default config
 					ByteStreams.copy(is, os);
 				}
 			}
@@ -173,9 +202,35 @@ public class ManhuntBungee extends Plugin implements Listener {
 		ByteArrayDataOutput out = ByteStreams.newDataOutput();
 		out.writeUTF("config");
 		out.writeInt(config.getInt("game.hunted-headstart"));
-		out.writeInt(config.getInt("game.hunter-chance"));
+		out.writeInt(config.getInt("game.hunted-chance"));
 		out.writeUTF(config.getString("game.won-game"));
 		out.writeUTF(config.getString("game.lost-game"));
 		info.sendData(PLUGIN_CHANNEL, out.toByteArray());
+	}
+
+	public boolean removeQueue(UUID player) {
+		List<ProxiedPlayer> party = null;
+		for (List<ProxiedPlayer> proxiedPlayers : queue) {
+			if (!proxiedPlayers.get(0).getUniqueId().equals(player)) {
+				// Remove singular player from queue if not in party
+				boolean l = proxiedPlayers.removeIf(p -> p.getUniqueId().equals(player));
+				if (l) {
+					proxiedPlayers.forEach(pl -> pl.sendMessage(new ComponentBuilder(getProxy().getPlayer(player).getName() + " left the queue").color(ChatColor.RED).create()));
+					if (getProxy().getPlayer(player) != null)
+						getProxy().getPlayer(player).sendMessage(new ComponentBuilder("You left the queue").color(ChatColor.RED).create());
+					return true;
+				}
+			} else {
+				party = proxiedPlayers;
+			}
+		}
+		if (party != null) {
+			queue.remove(party);
+			queueMode.remove(party);
+			party.forEach(pl -> pl.sendMessage(new ComponentBuilder("Party leader left the queue").color(ChatColor.RED).create()));
+			return true;
+		} else {
+			return false;
+		}
 	}
 }
