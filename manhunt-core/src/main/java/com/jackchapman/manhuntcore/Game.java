@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 public class Game {
 	private final List<UUID> waiting;
 	private final int mode;
+	private final HashMap<UUID, Integer> rods;
 	private List<UUID> hunters;
 	private UUID hunted;
 	private BukkitTask preGameTask;
@@ -21,9 +22,42 @@ public class Game {
 	private boolean ended;
 	private PlayerType winners;
 	private boolean countdown; // If the hunted player is able to move but the hunters are still frozen
+	private Location endPortal;
+	private Location netherPortalNether;
+	private Location netherPortalOverworld;
+
 	public Game(int mode) {
+		this.rods = new HashMap<>();
 		this.mode = mode;
 		this.waiting = new ArrayList<>();
+	}
+
+	public Location getNetherPortalNether() {
+		return netherPortalNether;
+	}
+
+	public void setNetherPortalNether(Location netherPortalNether) {
+		this.netherPortalNether = netherPortalNether;
+	}
+
+	public Location getNetherPortalOverworld() {
+		return netherPortalOverworld;
+	}
+
+	public void setNetherPortalOverworld(Location netherPortalOverworld) {
+		this.netherPortalOverworld = netherPortalOverworld;
+	}
+
+	public Location getEndPortal() {
+		return endPortal;
+	}
+
+	public void setEndPortal(Location endPortal) {
+		this.endPortal = endPortal;
+	}
+
+	public HashMap<UUID, Integer> getRods() {
+		return rods;
 	}
 
 	public BukkitTask getPreGameTask() {
@@ -131,11 +165,11 @@ public class Game {
 		getWaitingPlayers().forEach(p -> p.teleport(world.getSpawnLocation()));
 
 		// Compute which player will be the hunter
-		int defWeight = plugin.getBungeeConfig().getHunterChance();
+		int defWeight = plugin.getBungeeConfig().getHuntedChance();
 		TreeMap<Integer, Player> items = new TreeMap<>();
 		int weight = 0;
 		for (Player player : getWaitingPlayers()) {
-			weight += Util.getPermissionVariable("core.hunter", player).max().orElse(defWeight);
+			weight += Util.getPermissionVariable("core.hunted", player).max().orElse(defWeight);
 			items.put(weight, player);
 		}
 
@@ -178,13 +212,7 @@ public class Game {
 		};
 
 		// Give the correct compass to the hunters
-		hunters.forEach(hunter -> {
-			if (hunter.hasPermission("core.compass+")) hunter.getInventory().addItem(ManhuntCore.COMPASS_PLUS);
-			else hunter.getInventory().addItem(ManhuntCore.COMPASS);
-			for (int i = 0; i < Util.getPermissionVariable("core.rod", hunter).max().orElse(0); i++) {
-				hunter.getInventory().addItem(ManhuntCore.TRACKING_ROD);
-			}
-		});
+		hunters.forEach(this::giveCompass);
 
 		// Register the tasks to start the countdowns
 		// Cancel the tasks after they are done
@@ -222,6 +250,18 @@ public class Game {
 			getHuntedPlayer().sendPluginMessage(plugin, "manhunt:game", endOutput.toByteArray());
 		}, 15 * 20L);
 		Bukkit.getScheduler().runTaskLater(plugin, Bukkit::shutdown, 15 * 20L + 100);
+	}
+
+	public void giveCompass(Player hunter) {
+		if (hunter.hasPermission("core.compass+")) hunter.getInventory().addItem(ManhuntCore.COMPASS_PLUS);
+		else hunter.getInventory().addItem(ManhuntCore.COMPASS);
+		for (int i = rods.getOrDefault(hunter.getUniqueId(), 0); i < Util.getPermissionVariable("core.rod", hunter).max().orElse(0); i++) {
+			hunter.getInventory().addItem(ManhuntCore.TRACKING_ROD);
+		}
+	}
+
+	public boolean isPreGame(UUID uuid) {
+		return !running || (countdown && hunters.contains(uuid));
 	}
 
 	private enum PlayerType {

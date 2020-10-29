@@ -12,6 +12,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.*;
 
 import java.util.stream.Collectors;
@@ -74,9 +76,13 @@ public class PregameListeners implements Listener {
 			plugin.getGame().setPreGameTask(null);
 			Bukkit.broadcastMessage(ChatColor.RED + "Failed to start game - not enough players!");
 		}
-		if (Bukkit.getOnlinePlayers().isEmpty()) {
-			Bukkit.shutdown();
-		}
+		Bukkit.getScheduler().runTaskLater(plugin, () -> {
+			// If the game has started and all players left reset the game
+			if (plugin.getGame() != null && plugin.getGame().isRunning() && Bukkit.getOnlinePlayers().isEmpty()) {
+				Bukkit.shutdown();
+			}
+		}, 20);
+
 	}
 
 	@EventHandler
@@ -87,7 +93,7 @@ public class PregameListeners implements Listener {
 		Game game = plugin.getGame();
 		// Stop player from moving if the game is waiting to start
 		// or only the hunted should be able to move
-		if (!game.isRunning() || (game.isCountdown() && game.getHunters().contains(e.getPlayer().getUniqueId()))) {
+		if (game.isPreGame(e.getPlayer().getUniqueId())) {
 			Location from = e.getFrom();
 			Location loc = new Location(from.getWorld(), from.getX(), from.getY(), from.getZ(), e.getTo().getYaw(), e.getTo().getPitch());
 			e.setTo(loc);
@@ -98,14 +104,14 @@ public class PregameListeners implements Listener {
 	@EventHandler
 	public void onPlace(BlockPlaceEvent e) {
 		Game game = plugin.getGame();
-		if (game == null || (!game.isRunning() || game.isCountdown() && game.getHunters().contains(e.getPlayer().getUniqueId())))
+		if (game == null || game.isPreGame(e.getPlayer().getUniqueId()))
 			e.setCancelled(true);
 	}
 
 	@EventHandler
 	public void onInteract(PlayerInteractEvent e) {
 		Game game = plugin.getGame();
-		if (game == null || (!game.isRunning() || game.isCountdown() && game.getHunters().contains(e.getPlayer().getUniqueId())))
+		if (game == null || game.isPreGame(e.getPlayer().getUniqueId()))
 			e.setCancelled(true);
 		else if (game.isCountdown() && e.getClickedBlock() != null && e.getClickedBlock().getLocation().distance(game.getHunterPlayers().get(0).getLocation()) <= 8) {
 			e.getPlayer().sendMessage(ChatColor.RED + "Cannot build this close to hunters at the beginning of the game");
@@ -114,8 +120,22 @@ public class PregameListeners implements Listener {
 	}
 
 	@EventHandler
+	public void onPickup(EntityPickupItemEvent e) {
+		Game game = plugin.getGame();
+		if (e.getEntity() instanceof Player && (game == null || game.isPreGame(e.getEntity().getUniqueId())))
+			e.setCancelled(true);
+	}
+
+	@EventHandler
+	public void onPlayerFood(FoodLevelChangeEvent e) {
+		Game game = plugin.getGame();
+		if (e.getEntity() instanceof Player && (game == null || game.isPreGame(e.getEntity().getUniqueId())))
+			e.setCancelled(true);
+	}
+
+	@EventHandler
 	public void onDamage(EntityDamageEvent e) {
-		if (e.getEntity() instanceof Player && (plugin.getGame() == null || !plugin.getGame().isRunning() || (plugin.getGame().isCountdown() && plugin.getGame().getHunters().contains(e.getEntity().getUniqueId()))))
+		if (e.getEntity() instanceof Player && (plugin.getGame() == null || plugin.getGame().isPreGame(e.getEntity().getUniqueId())))
 			e.setCancelled(true);
 	}
 }

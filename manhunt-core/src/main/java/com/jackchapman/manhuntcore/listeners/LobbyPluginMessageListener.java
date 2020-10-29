@@ -23,7 +23,6 @@ public class LobbyPluginMessageListener implements PluginMessageListener {
 	public void onPluginMessageReceived(String channel, Player player, byte[] message) {
 		ByteArrayDataInput in = ByteStreams.newDataInput(message);
 		String action = in.readUTF();
-		System.out.println(action);
 		if (action.equals("start")) {
 			int mode = in.readInt();
 			plugin.setGame(new Game(mode));

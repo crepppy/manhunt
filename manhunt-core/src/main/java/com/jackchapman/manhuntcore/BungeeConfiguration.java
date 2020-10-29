@@ -4,20 +4,20 @@ import org.bukkit.ChatColor;
 
 public class BungeeConfiguration {
 	private final int huntedHeadstart;
-	private final int hunterChance;
+	private final int huntedChance;
 	private final String wonGame;
 	private final String lostGame;
 
 	public BungeeConfiguration() {
 		this.huntedHeadstart = 30;
-		this.hunterChance = 50;
+		this.huntedChance = 50;
 		this.wonGame = ChatColor.GREEN + "You Won!";
 		this.lostGame = ChatColor.RED + "You Lost!";
 	}
 
-	public BungeeConfiguration(int huntedHeadstart, int hunterChance, String wonGame, String lostGame) {
+	public BungeeConfiguration(int huntedHeadstart, int huntedChance, String wonGame, String lostGame) {
 		this.huntedHeadstart = huntedHeadstart;
-		this.hunterChance = hunterChance;
+		this.huntedChance = huntedChance;
 		this.wonGame = ChatColor.translateAlternateColorCodes('&', wonGame);
 		this.lostGame = ChatColor.translateAlternateColorCodes('&', lostGame);
 	}
@@ -26,8 +26,8 @@ public class BungeeConfiguration {
 		return huntedHeadstart;
 	}
 
-	public int getHunterChance() {
-		return hunterChance;
+	public int getHuntedChance() {
+		return huntedChance;
 	}
 
 	public String getWonGame() {

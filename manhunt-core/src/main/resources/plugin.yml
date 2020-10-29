@@ -11,3 +11,14 @@ commands:
   givetracker:
     description: Gives the player a tracking item
     usage: /<command>
+
+permissions:
+  core.forcestart:
+    description: Allows the player to forcefully start a game
+    default: op
+  core.givetracker:
+    description: Allows the player to give custom tracker items to others
+    default: op
+  core.compass+:
+    description: Gives the player a more advanced compass at the beginning of the game
+    default: op

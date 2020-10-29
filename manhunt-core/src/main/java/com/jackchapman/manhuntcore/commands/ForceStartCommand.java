@@ -22,6 +22,10 @@ public class ForceStartCommand implements CommandExecutor {
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+		if(!sender.hasPermission("core.forcestart")) {
+			sender.sendMessage(ChatColor.RED + "You don't have permission to run this command");
+			return true;
+		}
 		if (args.length > 1) {
 			List<UUID> players = new ArrayList<>();
 			for (String name : args) {

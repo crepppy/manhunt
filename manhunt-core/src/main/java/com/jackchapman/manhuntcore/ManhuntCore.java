@@ -6,9 +6,12 @@ import com.jackchapman.manhuntcore.listeners.*;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.CompassMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class ManhuntCore extends JavaPlugin {
@@ -48,9 +51,40 @@ public class ManhuntCore extends JavaPlugin {
 				// Update the compass to the players location
 				Player hunted = game.getHuntedPlayer();
 				if (hunted == null) return;
-				game.getHunterPlayers().forEach(p -> p.setCompassTarget(hunted.getLocation()));
+				final Location overworldLoc;
+				final Location loadstoneLoc;
+				switch (hunted.getWorld().getEnvironment()) {
+					case NETHER:
+						overworldLoc = game.getNetherPortalOverworld();
+						loadstoneLoc = hunted.getLocation();
+						break;
+					case THE_END:
+						overworldLoc = game.getEndPortal();
+						loadstoneLoc = game.getNetherPortalNether();
+						break;
+					default:
+						overworldLoc = hunted.getLocation();
+						loadstoneLoc = game.getNetherPortalNether();
+						break;
+				}
+				game.getHunterPlayers().forEach(p -> {
+					if (p.getWorld().getEnvironment() == World.Environment.NETHER) {
+						if(loadstoneLoc == null) return;
+						for(int i = 0; i < 36; i++) {
+							ItemStack it = p.getInventory().getStorageContents()[i];
+							if(it.getItemMeta() != null && it.getType() == Material.COMPASS) {
+								CompassMeta meta = (CompassMeta) it.getItemMeta();
+								meta.setLodestoneTracked(false);
+								meta.setLodestone(loadstoneLoc);
+								it.setItemMeta(meta);
+							}
+						}
+					} else {
+						p.setCompassTarget(overworldLoc);
+					}
+				});
 
-				// If a player is holding a compass+ then update their action bar to show the current dimension
+				// If a player is holding a compass+ then update their action bar to show the distance from the player
 				// the hunted player is in
 
 				for (Player p : Bukkit.getOnlinePlayers()) {
@@ -61,7 +95,7 @@ public class ManhuntCore extends JavaPlugin {
 										.append(Util.colorFromDimension(hunted.getLocation()).toString() + "§l" + Util.dimensionName(hunted.getLocation()))
 										.append(" ")
 										.append(Util.colorFromDimension(hunted.getLocation()).toString() + "Distance: ")
-										.append(Util.colorFromDimension(hunted.getLocation()).toString() + "§l" + Math.round(hunted.getLocation().distance(p.getLocation())) + "m")
+										.append(Util.colorFromDimension(hunted.getLocation()).toString() + "§l" + Math.round(p.getLocation().distance(p.getWorld().getEnvironment() == World.Environment.NETHER ? loadstoneLoc : overworldLoc)) + "m")
 										.create());
 					} else if (p.getInventory().getItemInMainHand().equals(COMPASS) || p.getInventory().getItemInOffHand().equals(COMPASS)) {
 						p.spigot().sendMessage(ChatMessageType.ACTION_BAR,

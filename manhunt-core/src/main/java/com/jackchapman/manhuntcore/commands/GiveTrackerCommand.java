@@ -20,6 +20,10 @@ public class GiveTrackerCommand implements CommandExecutor, TabCompleter {
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+		if(!sender.hasPermission("core.givetracker")) {
+			sender.sendMessage(ChatColor.RED + "You don't have permission to run this command");
+			return true;
+		}
 		if (args.length < 2) {
 			sender.sendMessage(ChatColor.RED + "Incorrect format: /givetracker <player> <compass | compass+ | rod>");
 		} else {
